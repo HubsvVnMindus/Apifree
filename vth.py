@@ -39,13 +39,14 @@ from colorama import Fore, Style, init
 
 # ==================== CẤU HÌNH JSONBIN ====================
 JSONBIN_API_KEY = "$2a$10$YOUR_JSONBIN_API_KEY_HERE"  # Thay bằng API Key của bạn
-JSONBIN_BIN_ID = "YOUR_BIN_ID_HERE"  # Thay bằng Bin ID của bạn
+JSONBIN_BIN_ID = "6a61dfbdf5f4af5e29b50537"  # Thay bằng Bin ID của bạn
 JSONBIN_URL = f"https://api.jsonbin.io/v3/b/{JSONBIN_BIN_ID}"
 # ==========================================================
 
 HISTORY_FILE = "bet_history.json"
 LOCAL_DB_FILE = "local_keys.json"
 DEVICE_FILE = "device_info.json"
+GAME_DATA_FILE = "game_data.json"
 
 def init_local_db():
     """Khởi tạo database local cho keys"""
@@ -90,6 +91,21 @@ def get_saved_device_info():
             pass
     return None, None
 
+def save_game_data(data):
+    """Lưu dữ liệu game"""
+    with open(GAME_DATA_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+def load_game_data():
+    """Tải dữ liệu game"""
+    if os.path.exists(GAME_DATA_FILE):
+        try:
+            with open(GAME_DATA_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            pass
+    return None
+
 def fetch_keys_from_jsonbin():
     """Lấy danh sách keys từ JSONbin"""
     try:
@@ -102,8 +118,10 @@ def fetch_keys_from_jsonbin():
             data = response.json()
             return data.get("record", {})
         else:
+            print(f"⚠️ Lỗi kết nối JSONbin: {response.status_code}")
             return None
     except Exception as e:
+        print(f"⚠️ Không thể kết nối đến JSONbin: {e}")
         return None
 
 def sync_keys_from_jsonbin():
@@ -111,10 +129,8 @@ def sync_keys_from_jsonbin():
     remote_data = fetch_keys_from_jsonbin()
     if remote_data:
         local_db = get_local_db()
-        # Cập nhật VIP keys từ remote
         if "vip_keys" in remote_data:
             local_db["vip_keys"].update(remote_data["vip_keys"])
-        # Cập nhật banned lists
         if "banned_hwids" in remote_data:
             local_db["banned_hwids"] = list(set(local_db["banned_hwids"] + remote_data["banned_hwids"]))
         if "banned_ips" in remote_data:
@@ -132,7 +148,6 @@ def get_today_key(hwid):
 
 def check_key_status(hwid):
     """Tự động kiểm tra trạng thái key"""
-    # Đồng bộ keys từ JSONbin
     sync_keys_from_jsonbin()
     
     local_db = get_local_db()
@@ -721,12 +736,11 @@ def banner():
 def draw_dashboard(s, headers, stats, Coin, countdown_sec, predicted_room, current_ki, current_balance, is_bet_placed=False, last_killed_room=None, expire_time_str="", algo_name="", bet_amount=0, key_type="free"):
     reset_cursor()
     
-    # Xác định màu sắc dựa trên loại key
     if key_type == "vip":
-        border_color = (255, 165, 0)  # Màu cam cho VIP
+        border_color = (255, 165, 0)
         title = "👑 HTOOL VIP | 40 AI LOGIC 👑"
     else:
-        border_color = (173, 216, 230)  # Màu xanh nhạt cho Free
+        border_color = (173, 216, 230)
         title = "🏆 HTOOL FREE | 10 AI CƠ BẢN 🏆"
     
     prints(border_color[0], border_color[1], border_color[2], "╔" + "═" * 53 + "╗")
@@ -755,7 +769,6 @@ def draw_dashboard(s, headers, stats, Coin, countdown_sec, predicted_room, curre
     sys.stdout.write(f"\033[38;2;255;255;255m║  📈 Lãi/lỗ:     \033[38;2;{earn_color[0]};{earn_color[1]};{earn_color[2]}m{'+' if earn>=0 else ''}{earn:,.2f} {Coin}\033[0m\033[K\n")
     prints(255, 255, 255, f"║  🔥 Thắng: {stats['win']} | Thua: {stats['lose']} | Streak: {stats['streak']}")
     
-    # Hiển thị loại key
     if key_type == "vip":
         prints(255, 165, 0, f"║  🔑 Loại Key:    👑 VIP (40 AI)")
     else:
@@ -802,7 +815,6 @@ def draw_dashboard(s, headers, stats, Coin, countdown_sec, predicted_room, curre
     prints(255, 255, 255, f"  [{bar}] {progress_percent}%")
     prints(255, 255, 0, f"  ⏳ Thời gian còn lại: {countdown_sec:.1f}s")
     
-    # Lịch sử cược
     prints(255, 215, 0, "\n┌────────────────── 📜 LỊCH SỬ CƯỢC ──────────────────┐")
     prints(255, 215, 0, "│ Kỳ      Phòng           Cược       KQ       AI      │")
     prints(255, 215, 0, "├─────────────────────────────────────────────────────┤")
@@ -931,29 +943,13 @@ def kiem_tra_kq_vth(s,headers,ki,bot_chon,Coin,tg):
     except Exception as e:
         return kiem_tra_kq_vth(s,headers,ki,bot_chon,Coin,tg)
 
-def main():
-    # Khởi tạo
-    init_local_db()
-    
-    # Lấy thông tin thiết bị
-    hwid = get_device_hwid()
-    ip = get_public_ip()
-    save_device_info(hwid, ip)
-    
-    # Kiểm tra bảo mật
-    check_security_status()
-    
+def run_game(key_data):
+    """Chạy game với key đã xác thực"""
     s = requests.Session()
     
-    # Đồng bộ keys từ JSONbin
-    prints(0, 255, 243, "🔄 Đang đồng bộ dữ liệu từ máy chủ...")
-    sync_keys_from_jsonbin()
-    
-    # Tự động kiểm tra key
-    key_info = check_key_status(hwid)
-    key_type = key_info["type"]
-    current_key = key_info["key"]
-    expire_time = key_info["expire_time"]
+    key_type = key_data["type"]
+    current_key = key_data["key"]
+    expire_time = key_data["expire_time"]
     
     clear_screen()
     banner()
@@ -967,30 +963,47 @@ def main():
         prints(255, 165, 0, "💡 Nâng cấp lên VIP để dùng 40 AI? Liên hệ Admin!")
     
     prints(125, 255, 168, f"⏰ Hạn dùng: {expire_time}")
-    prints(255, 255, 255, f"🖥️ HWID: {hwid}")
+    prints(255, 255, 255, f"🖥️ HWID: {key_data.get('hwid', 'N/A')}")
     time.sleep(3)
     
-    # Nhập link game
-    clear_screen()
-    banner()
+    # Kiểm tra xem có dữ liệu game đã lưu không
+    saved_game = load_game_data()
+    if saved_game:
+        prints(0, 255, 243, '\nDùng tài khoản game cũ? (y/n): ', end='')
+        x = input().lower().strip()
+        if x == 'y':
+            user_id = saved_game['user_id']
+            user_secretkey = saved_game['user_secretkey']
+        else:
+            saved_game = None
     
-    str_guide="""
-Hướng dẫn lấy link game:
-    1. Truy cập website xworld.io
-    2. Đăng nhập vào tài khoản
-    3. Vào Vua thoát hiểm
-    4. Copy link website và dán vào đây
-"""
-    prints(218, 255, 125, str_guide)
-    prints(247, 255, 97, "═" * 47)
-    prints(125, 255, 168, '📋 Nhập liên kết của bạn:', end=' ')
-    link = input()
-    try:
-        user_id = link.split('userId=')[1].split('&')[0]
-        user_secretkey = link.split('secretKey=')[1].split('&')[0]
-    except Exception:
-        prints(255, 0, 0, "❌ Cấu trúc Link sai!")
-        sys.exit(1)
+    if not saved_game:
+        clear_screen()
+        banner()
+        
+        str_guide="""
+    Hướng dẫn lấy link game:
+        1. Truy cập website xworld.io
+        2. Đăng nhập vào tài khoản
+        3. Vào Vua thoát hiểm
+        4. Copy link website và dán vào đây
+    """
+        prints(218, 255, 125, str_guide)
+        prints(247, 255, 97, "═" * 47)
+        prints(125, 255, 168, '📋 Nhập liên kết của bạn:', end=' ')
+        link = input()
+        try:
+            user_id = link.split('userId=')[1].split('&')[0]
+            user_secretkey = link.split('secretKey=')[1].split('&')[0]
+        except Exception:
+            prints(255, 0, 0, "❌ Cấu trúc Link sai!")
+            sys.exit(1)
+        
+        # Lưu dữ liệu game
+        save_game_data({
+            'user_id': user_id,
+            'user_secretkey': user_secretkey
+        })
     
     headers = {
         'accept': '*/*',
@@ -1051,7 +1064,6 @@ Hướng dẫn lấy link game:
     except:
         ai_choice = 7
     
-    # Kiểm tra nếu chọn AI VIP mà dùng key free
     if ai_choice > 10 and key_type != 'vip':
         prints(255, 165, 0, f'\n⚠️ AI {ai_choice} yêu cầu KEY VIP!')
         prints(255, 255, 255, 'Tự động chuyển sang AI 7 (Smart Safe)')
@@ -1083,7 +1095,6 @@ Hướng dẫn lấy link game:
     
     while True:
         try:
-            # Kiểm tra bảo mật và hạn key
             check_security_status()
             
             try:
@@ -1100,7 +1111,6 @@ Hướng dẫn lấy link game:
             data10 = top10_vth(s, headers, Coin)
             data100 = top100_vth(s, headers, Coin)
             
-            # Chọn phòng bằng AI có kiểm tra key
             bot_chon = chon_phong_ai(data10, data100, ai_choice, current_key)
             
             ki = data10[0][0] + 1
@@ -1187,6 +1197,30 @@ Hướng dẫn lấy link game:
             prints(5, 255, 0, f'\n👋 Đã dừng!')
             save_history(bet_history)
             sys.exit(0)
+
+def main():
+    # Khởi tạo
+    init_local_db()
+    
+    # Lấy thông tin thiết bị
+    hwid = get_device_hwid()
+    ip = get_public_ip()
+    save_device_info(hwid, ip)
+    
+    # Kiểm tra bảo mật
+    check_security_status()
+    
+    # Đồng bộ keys từ JSONbin
+    prints(0, 255, 243, "🔄 Đang đồng bộ dữ liệu từ máy chủ...")
+    sync_keys_from_jsonbin()
+    prints(0, 255, 102, "✅ Đồng bộ thành công!")
+    time.sleep(1)
+    
+    # Tự động kiểm tra key
+    key_data = check_key_status(hwid)
+    
+    # Chạy game
+    run_game(key_data)
 
 if __name__ == "__main__":
     main()
