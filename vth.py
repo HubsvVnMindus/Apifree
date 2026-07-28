@@ -36,7 +36,8 @@ API_TOKEN_LINK4M = "6a620a7003c42e28f00e2158"
 LINK_GOC_TRA_KEY = "https://hungkeytool.vercel.app/"
 ADMIN_PASSWORD_SECRET = "ADMIN@123"
 
-JSONBIN_ACCESS_KEY = "$2a$10$M8S59kpMRgtfJvKksOsKnOqpGlG6dp9G2zqoJRSmbJldOn8M3FPI6"
+# ==================== JSONBIN.IO - BIN MỚI ====================
+JSONBIN_ACCESS_KEY = "$2a$10$/uJjsYrJuzj8dv05WWx2GeduolAFRgt47yqAXmxlK2pBoX5A1Ckey"
 JSONBIN_BIN_ID = "6a6816e9f5f4af5e29caf8a8"
 JSONBIN_READ_URL = f"https://api.jsonbin.io/v3/b/{JSONBIN_BIN_ID}/latest"
 JSONBIN_UPDATE_URL = f"https://api.jsonbin.io/v3/b/{JSONBIN_BIN_ID}"
@@ -180,31 +181,111 @@ def get_today_key(hwid=None):
 def get_jsonbin_headers():
     return {"X-Access-Key": JSONBIN_ACCESS_KEY, "Content-Type": "application/json"}
 
-def get_db():
+def init_jsonbin_db():
+    """Khởi tạo database trên jsonbin.io"""
     try:
-        r = requests.get(JSONBIN_READ_URL, headers=get_jsonbin_headers(), timeout=10)
-        if r.status_code == 200:
-            return r.json()["record"]
-    except:
-        pass
+        headers = get_jsonbin_headers()
+        response = requests.get(JSONBIN_READ_URL, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            print("✅ Kết nối API thành công!")
+            return True
+        elif response.status_code == 404:
+            print("⚠️ Bin chưa tồn tại, đang tạo mới...")
+            default_data = {
+                "vip_keys": {},
+                "banned_hwids": [],
+                "banned_ips": [],
+                "user_keys": {},
+                "device_info": {}
+            }
+            create_response = requests.put(
+                JSONBIN_UPDATE_URL, 
+                headers=headers, 
+                json=default_data, 
+                timeout=10
+            )
+            if create_response.status_code == 200:
+                print("✅ Tạo bin mới thành công!")
+                return True
+            else:
+                print(f"❌ Lỗi tạo bin: {create_response.status_code}")
+                return False
+        else:
+            print(f"⚠️ Mã lỗi: {response.status_code}")
+            return False
+    except Exception as e:
+        print(f"❌ Lỗi: {e}")
+        return False
+
+def get_db():
+    """Lấy dữ liệu từ jsonbin.io"""
+    try:
+        headers = get_jsonbin_headers()
+        response = requests.get(JSONBIN_READ_URL, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            record = data.get("record", {})
+            # Backup local
+            try:
+                with open(DB_LOCAL_BACKUP, 'w', encoding='utf-8') as f:
+                    json.dump(record, f, indent=4, ensure_ascii=False)
+            except:
+                pass
+            return record
+    except Exception as e:
+        print(f"⚠️ Lỗi đọc cloud: {e}")
+    
+    # Fallback local
     if os.path.exists(DB_LOCAL_BACKUP):
         try:
-            with open(DB_LOCAL_BACKUP, 'r') as f:
+            with open(DB_LOCAL_BACKUP, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except:
             pass
+    
     return {"vip_keys": {}, "banned_hwids": [], "banned_ips": [], "user_keys": {}, "device_info": {}}
 
 def save_db(data):
+    """Lưu dữ liệu - Ưu tiên local, thử cloud nếu có mạng"""
+    success_local = False
+    
+    # 1. Luôn lưu local trước
     try:
-        with open(DB_LOCAL_BACKUP, 'w') as f:
-            json.dump(data, f, indent=4)
-    except:
-        pass
+        # Thử xóa file cũ nếu tồn tại
+        if os.path.exists(DB_LOCAL_BACKUP):
+            try:
+                os.remove(DB_LOCAL_BACKUP)
+            except:
+                pass
+        
+        with open(DB_LOCAL_BACKUP, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+        success_local = True
+    except Exception as e:
+        print(f"⚠️ Lỗi lưu local: {e}")
+        # Thử lưu vào thư mục home
+        try:
+            backup_path = os.path.join(os.path.expanduser("~"), DB_LOCAL_BACKUP)
+            with open(backup_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=4, ensure_ascii=False)
+            success_local = True
+        except:
+            pass
+    
+    # 2. Thử lưu lên cloud
     try:
-        requests.put(JSONBIN_UPDATE_URL, headers=get_jsonbin_headers(), json=data, timeout=10)
+        headers = get_jsonbin_headers()
+        response = requests.put(JSONBIN_UPDATE_URL, headers=headers, json=data, timeout=10)
+        if response.status_code == 200:
+            print("✅ Đã đồng bộ cloud!")
+        else:
+            print(f"⚠️ Cloud: {response.status_code}")
     except:
-        pass
+        print("⚠️ Không có mạng, chỉ lưu local")
+    
+    return success_local
 
 def is_key_expired(expire_time_str):
     if not expire_time_str:
@@ -235,34 +316,22 @@ def generate_short_link(server_type="link4m"):
     url_can_rut_gon = f"{LINK_GOC_TRA_KEY}?hwid={hwid}&ip={ip}&key={get_today_key(hwid)}"
     encoded_url = urllib.parse.quote(url_can_rut_gon)
     
-    if server_type == "layma":
-        api_url = f"https://api.layma.net/api/admin/shortlink/quicklink?tokenUser={API_TOKEN_LAYMA}&format=json&url={encoded_url}"
-        try:
-            res = requests.get(api_url, timeout=7).json()
-            if res.get("success") is True:
-                return res.get("html")
-        except:
-            pass
-        return "❌ Lỗi kết nối đến LayMa.net!"
-    elif server_type == "oklink":
-        api_url = f"https://vuotlink.xyz/api?api={API_TOKEN_OKLINK}&url={encoded_url}&format=text"
-        try:
-            res = requests.get(api_url, timeout=7)
-            if res.status_code == 200 and res.text.strip() and "http" in res.text:
-                return res.text.strip()
-        except:
-            pass
-        return "❌ Máy chủ OkLink đang bận!"
-    elif server_type == "link4m":
-        api_url = f"https://link4m.co/api-shorten/v2?api={API_TOKEN_LINK4M}&url={encoded_url}"
-        try:
-            res = requests.get(api_url, timeout=7).json()
-            if res.get("status") == "success" and res.get("shortenedUrl"):
-                return res.get("shortenedUrl")
-        except:
-            pass
-        return "❌ Lỗi kết nối đến Link4M!"
-    return "❌ Hệ thống gặp sự cố!"
+    apis = {
+        "layma": f"https://api.layma.net/api/admin/shortlink/quicklink?tokenUser={API_TOKEN_LAYMA}&format=json&url={encoded_url}",
+        "oklink": f"https://vuotlink.xyz/api?api={API_TOKEN_OKLINK}&url={encoded_url}&format=text",
+        "link4m": f"https://link4m.co/api-shorten/v2?api={API_TOKEN_LINK4M}&url={encoded_url}"
+    }
+    
+    try:
+        r = requests.get(apis.get(server_type, apis["link4m"]), timeout=7)
+        if server_type == "layma":
+            return r.json().get("html", "❌ Lỗi")
+        elif server_type == "oklink":
+            return r.text.strip() if r.status_code == 200 and "http" in r.text else "❌ Lỗi"
+        else:
+            return r.json().get("shortenedUrl", "❌ Lỗi")
+    except:
+        return "❌ Lỗi kết nối"
 
 def validate_license_key(key, hwid=None, ip=None):
     if hwid is None:
@@ -277,7 +346,7 @@ def validate_license_key(key, hwid=None, ip=None):
     if key in db.get("vip_keys", {}):
         key_data = db["vip_keys"][key]
         expire_str = key_data.get("expire_time", "")
-        if datetime.strptime(expire_str, "%Y-%m-%d %H:%M:%S") < datetime.now():
+        if is_key_expired(expire_str):
             return False, "Key VIP đã hết hạn", None
         if key_data.get("hwid", "ANY") != "ANY" and key_data["hwid"] != hwid:
             return False, "Key VIP được cấp riêng cho thiết bị khác", None
@@ -389,6 +458,28 @@ def unban(target):
         return True, f"Đã gỡ ban IP: {target}"
     return False, f"Không tìm thấy: {target}"
 
+def reset_all_vip_keys():
+    """Reset tất cả key VIP về hết hạn"""
+    db = get_db()
+    vip_keys = db.get("vip_keys", {})
+    count = 0
+    for key in vip_keys:
+        vip_keys[key]["expire_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        count += 1
+    db["vip_keys"] = vip_keys
+    if save_db(db):
+        return count
+    return -1
+
+def delete_all_vip_keys():
+    """Xóa tất cả key VIP"""
+    db = get_db()
+    count = len(db.get("vip_keys", {}))
+    db["vip_keys"] = {}
+    if save_db(db):
+        return count
+    return -1
+
 # ==================== SHOW FUNCTIONS ====================
 def show_ai_list(is_vip=False, max_ai=10):
     clear_screen()
@@ -461,8 +552,8 @@ def show_admin_menu():
         prints(255, 255, 255, "  [3] 🛑 BAN IP")
         prints(255, 255, 255, "  [4] 📋 Xem danh sách")
         prints(255, 255, 255, "  [5] 🔓 Gỡ BAN / Xóa Key")
-        prints(255, 255, 255, "  [6] 🔄 Reset tất cả KEY VIP")
-        prints(255, 255, 255, "  [7] 🗑️  Xóa tất cả KEY VIP")
+        prints(255, 255, 255, "  [6] 🔄 Reset tất cả KEY VIP (hết hạn)")
+        prints(255, 255, 255, "  [7] 🗑️  Xóa tất cả KEY VIP (xóa vĩnh viễn)")
         prints(255, 255, 255, "  [8] 🚪 Thoát Admin")
         prints(255, 69, 0, "═" * 60)
         prints(255, 255, 0, "👉 Chọn: ", end="")
@@ -479,32 +570,39 @@ def show_admin_menu():
                 prints(0, 255, 102, f"\n🎉 Key: {result['key']}")
                 prints(255, 255, 255, f"⏱️ Hạn: {result['expire_time']}")
             else:
-                prints(255, 0, 0, "❌ Lỗi!")
+                prints(255, 0, 0, "\n❌ Lỗi khi tạo key! Kiểm tra kết nối mạng.")
             input("\nEnter...")
             
         elif c == '2':
             hwid = input("Nhập HWID cần ban: ").strip().upper()
             if hwid:
-                ban_hwid(hwid)
-                prints(0, 255, 102, f"✅ Đã ban {hwid}")
+                if ban_hwid(hwid):
+                    prints(0, 255, 102, f"✅ Đã ban {hwid}")
+                else:
+                    prints(255, 0, 0, "❌ Lỗi khi ban!")
             input("\nEnter...")
             
         elif c == '3':
             ip = input("Nhập IP cần ban: ").strip()
             if ip:
-                ban_ip(ip)
-                prints(0, 255, 102, f"✅ Đã ban {ip}")
+                if ban_ip(ip):
+                    prints(0, 255, 102, f"✅ Đã ban {ip}")
+                else:
+                    prints(255, 0, 0, "❌ Lỗi khi ban!")
             input("\nEnter...")
             
         elif c == '4':
             clear_screen()
             db = get_db()
-            prints(0, 255, 243, "📋 DỮ LIỆU:")
+            prints(0, 255, 243, "📋 DỮ LIỆU HIỆN TẠI:")
             print("\n--- KEY VIP ---")
             vip_keys = db.get("vip_keys", {})
             if vip_keys:
                 for k, v in vip_keys.items():
-                    print(f"🔑 {k} | HWID: {v.get('hwid')} | IP: {v.get('ip')} | Hạn: {v.get('expire_time')}")
+                    expired = "❌ HẾT HẠN" if is_key_expired(v.get('expire_time', '')) else "✅ CÒN HẠN"
+                    print(f"🔑 {k}")
+                    print(f"   HWID: {v.get('hwid')} | IP: {v.get('ip')} | {expired}")
+                    print(f"   Hạn: {v.get('expire_time')}")
                 print(f"\n📊 Tổng: {len(vip_keys)} key VIP")
             else:
                 print("  Chưa có key VIP nào")
@@ -525,47 +623,35 @@ def show_admin_menu():
         elif c == '6':
             clear_screen()
             banner(True, "RESET KEY VIP")
-            prints(255, 200, 0, "\n⚠️  CẢNH BÁO: Thao tác này sẽ reset thời hạn tất cả key VIP về 0!")
-            prints(255, 200, 0, "   Tất cả key VIP sẽ hết hạn ngay lập tức!")
-            prints(255, 255, 255, "\n👉 Bạn có chắc chắn muốn RESET tất cả key VIP?")
+            prints(255, 200, 0, "\n⚠️  CẢNH BÁO: Tất cả key VIP sẽ hết hạn ngay lập tức!")
             prints(255, 0, 0, "   Gõ 'RESET' để xác nhận: ", end="")
             confirm = input().strip()
             
             if confirm.upper() == "RESET":
-                db = get_db()
-                vip_keys = db.get("vip_keys", {})
-                count = 0
-                for key in vip_keys:
-                    vip_keys[key]["expire_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    count += 1
-                db["vip_keys"] = vip_keys
-                if save_db(db):
-                    prints(0, 255, 102, f"\n✅ Đã reset {count} key VIP! Tất cả đã hết hạn.")
+                count = reset_all_vip_keys()
+                if count >= 0:
+                    prints(0, 255, 102, f"\n✅ Đã reset {count} key VIP!")
                 else:
-                    prints(255, 0, 0, "\n❌ Lỗi khi lưu!")
+                    prints(255, 0, 0, "\n❌ Lỗi khi reset! Kiểm tra kết nối mạng.")
             else:
-                prints(255, 255, 0, "\n❌ Đã hủy thao tác reset.")
+                prints(255, 255, 0, "\n❌ Đã hủy.")
             input("\nEnter...")
             
         elif c == '7':
             clear_screen()
             banner(True, "XÓA KEY VIP")
-            prints(255, 0, 0, "\n⚠️  CẢNH BÁO: Thao tác này sẽ XÓA VĨNH VIỄN tất cả key VIP!")
-            prints(255, 0, 0, "   Không thể khôi phục sau khi xóa!")
-            prints(255, 255, 255, "\n👉 Bạn có chắc chắn muốn XÓA tất cả key VIP?")
+            prints(255, 0, 0, "\n⚠️  CẢNH BÁO: Xóa VĨNH VIỄN tất cả key VIP!")
             prints(255, 0, 0, "   Gõ 'DELETE' để xác nhận: ", end="")
             confirm = input().strip()
             
             if confirm.upper() == "DELETE":
-                db = get_db()
-                count = len(db.get("vip_keys", {}))
-                db["vip_keys"] = {}
-                if save_db(db):
+                count = delete_all_vip_keys()
+                if count >= 0:
                     prints(0, 255, 102, f"\n✅ Đã xóa {count} key VIP vĩnh viễn!")
                 else:
-                    prints(255, 0, 0, "\n❌ Lỗi khi lưu!")
+                    prints(255, 0, 0, "\n❌ Lỗi khi xóa! Kiểm tra kết nối mạng.")
             else:
-                prints(255, 255, 0, "\n❌ Đã hủy thao tác xóa.")
+                prints(255, 255, 0, "\n❌ Đã hủy.")
             input("\nEnter...")
             
         elif c == '8':
@@ -802,6 +888,9 @@ def kiem_tra_kq(s, headers, kq, ki):
 # ==================== LOGIN SCREEN ====================
 def login_screen():
     global user_vip_status, current_key_data, banner_expire_time
+    
+    # Khởi tạo kết nối jsonbin
+    init_jsonbin_db()
     
     hwid = get_device_hwid()
     ip = get_public_ip()
