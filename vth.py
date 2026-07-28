@@ -37,7 +37,7 @@ LINK_GOC_TRA_KEY = "https://hungkeytool.vercel.app/"
 ADMIN_PASSWORD_SECRET = "ADMIN@123"
 
 JSONBIN_ACCESS_KEY = "$2a$10$M8S59kpMRgtfJvKksOsKnOqpGlG6dp9G2zqoJRSmbJldOn8M3FPI6"
-JSONBIN_BIN_ID = "6a61dfbdf5f4af5e29b50537"
+JSONBIN_BIN_ID = "6a6816e9f5f4af5e29caf8a8"
 JSONBIN_READ_URL = f"https://api.jsonbin.io/v3/b/{JSONBIN_BIN_ID}/latest"
 JSONBIN_UPDATE_URL = f"https://api.jsonbin.io/v3/b/{JSONBIN_BIN_ID}"
 
