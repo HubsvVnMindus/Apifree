@@ -20,7 +20,7 @@ COLORS = [
 ]
 
 def type_writer(text, delay=0.03, color="\033[96m"):
-    """Hiệu ứng gõ máy đánh chữ"""
+    """Hiệu ứng gõ máy đánh chữ sinh động"""
     for char in text:
         sys.stdout.write(color + char + RESET)
         sys.stdout.flush()
@@ -31,19 +31,22 @@ def main():
     # Xóa màn hình cho sạch sẽ
     os.system('cls' if os.name == 'nt' else 'clear')
 
+    # Tiêu đề rực rỡ
     print(f"\n{COLORS[3]}{BOLD}{'='*65}{RESET}")
     print(f"{COLORS[1]}{BOLD}          🔥 THÔNG BÁO KHẨN CẤP & KẾT NỐI CỘNG ĐỒNG 🔥          {RESET}")
     print(f"{COLORS[3]}{BOLD}{'='*65}{RESET}\n")
 
     time.sleep(0.5)
-    type_writer("📢 Xin chào các bạn! Một không gian giao lưu tuyệt vời đang chờ đón bạn...", 0.03, "\033[93m")
+    
+    # Nội dung thông báo
+    type_writer("📢 Xin chào các bạn! Một không gian giao lưu tuyệt vời và cực kỳ chất lượng đang chờ đón bạn.", 0.03, "\033[93m")
     time.sleep(0.3)
-    type_writer("🚀 Hãy nhanh tay tham gia ngay nhóm mới cực kỳ chất lượng tại đây:", 0.03, "\033[92m")
+    type_writer("🚀 Hãy nhanh tay tham gia ngay nhóm mới để cùng thảo luận và chia sẻ kiến thức:", 0.03, "\033[92m")
     time.sleep(0.3)
 
-    # Hiệu ứng làm nổi bật Link Zalo chớp nháy
+    # Hiệu ứng làm nổi bật Link Zalo chớp nháy liên tục
     link_text = " 👉 LINK THAM GIA: https://zalo.me/g/e6bb2ppq4nofewqbfhrk 👈"
-    for _ in range(3):
+    for _ in range(4):
         sys.stdout.write(f"\r{COLORS[0]}{BOLD}{BLINK}{link_text}{RESET}")
         sys.stdout.flush()
         time.sleep(0.3)
@@ -53,7 +56,9 @@ def main():
     print("\n")
 
     time.sleep(0.5)
-    type_writer("💡 Gợi ý thêm: Cơ hội không đợi ai, số lượng thành viên có hạn, hãy kết nối ngay để không bỏ lỡ những thông tin độc quyền và quà tặng hấp dẫn nhé! 🎉", 0.03, "\033[95m")
+    
+    # Câu thông báo sáng tạo ở cuối
+    type_writer("💡 Gợi ý thêm: Cơ hội không đợi ai, số lượng thành viên có hạn, hãy kết nối ngay để không bỏ lỡ những thông tin độc quyền và các phần quà hấp dẫn nhé! 🎉", 0.03, "\033[95m")
 
     print(f"\n{COLORS[3]}{'='*65}{RESET}\n")
 
