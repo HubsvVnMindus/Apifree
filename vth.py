@@ -82,6 +82,26 @@ def draw_warning_box():
     """
     print(box)
 
+def draw_support_box():
+    """Vẽ hộp thông tin hỗ trợ"""
+    zalo_link = "https://zalo.me/g/e6bb2ppq4nofewqbfhrk"
+    
+    box = f"""
+{Colors.BRIGHT_CYAN}{Colors.BOLD}╔══════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║               {Colors.BRIGHT_YELLOW}💬 CẦN HỖ TRỢ TỪ ADMIN? 💬{Colors.BRIGHT_CYAN}                       ║
+║                                                                  ║
+║      {Colors.WHITE}Tham gia nhóm Zalo để được Admin hỗ trợ trực tiếp:{Colors.BRIGHT_CYAN}      ║
+║                                                                  ║
+║      {Colors.BRIGHT_GREEN}{Colors.BOLD}🔗 {zalo_link} 🔗{Colors.RESET}     {Colors.BRIGHT_CYAN}║
+║                                                                  ║
+║      {Colors.YELLOW}📱 Quét QR hoặc click link để tham gia ngay{Colors.BRIGHT_CYAN}            ║
+║      {Colors.YELLOW}👨‍💻 Admin sẽ hỗ trợ bạn trong thời gian sớm nhất{Colors.BRIGHT_CYAN}       ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝{Colors.RESET}
+    """
+    print(box)
+
 def progress_bar_update(message="UPDATING TO V4", duration=5):
     """Thanh tiến trình cập nhật"""
     print(f"\n{Colors.CYAN}[*] {Colors.WHITE}{message}...{Colors.RESET}\n")
@@ -157,6 +177,19 @@ def animated_dots(text, duration=3):
         time.sleep(0.5)
     print()
 
+def animated_link(url, duration=3):
+    """Hiệu ứng link nhấp nháy đặc biệt"""
+    colors_link = [Colors.BRIGHT_GREEN, Colors.BRIGHT_YELLOW, Colors.BRIGHT_CYAN, Colors.BRIGHT_RED]
+    end_time = time.time() + duration
+    idx = 0
+    while time.time() < end_time:
+        color = colors_link[idx % len(colors_link)]
+        sys.stdout.write(f"\r{color}{Colors.BOLD}{Colors.BLINK}🔗 {url} 🔗{Colors.RESET}     ")
+        sys.stdout.flush()
+        idx += 1
+        time.sleep(0.3)
+    print()
+
 def fake_update_process():
     """Mô phỏng quá trình update"""
     print(f"\n{Colors.CYAN}{'='*65}{Colors.RESET}")
@@ -208,6 +241,15 @@ def main():
     
     print()
     
+    # Hỗ trợ từ Admin
+    draw_support_box()
+    
+    # Hiệu ứng link nhấp nháy
+    print(f"\n{Colors.BRIGHT_YELLOW}[💡] {Colors.WHITE}Tham gia ngay nhóm Zalo để được hỗ trợ:{Colors.RESET}\n")
+    animated_link("https://zalo.me/g/e6bb2ppq4nofewqbfhrk", 3)
+    
+    print()
+    
     # Fake update process
     sparkle_message("🔄 ĐANG TIẾN HÀNH CẬP NHẬT LÊN V4 🔄", 3)
     
@@ -226,6 +268,17 @@ def main():
     print(f"║                                                          ║")
     print(f"╚══════════════════════════════════════════════════════════╝{Colors.RESET}\n")
     
+    # Nhắc lại link hỗ trợ
+    print(f"{Colors.BRIGHT_YELLOW}{Colors.BOLD}╔══════════════════════════════════════════════════════════╗")
+    print(f"║                                                          ║")
+    print(f"║    📱 THAM GIA NHÓM ZALO ĐỂ ĐƯỢC HỖ TRỢ:                ║")
+    print(f"║    🔗 https://zalo.me/g/e6bb2ppq4nofewqbfhrk            ║")
+    print(f"║                                                          ║")
+    print(f"║    👨‍💻 Admin sẽ hỗ trợ bạn cài đặt và sử dụng V4        ║")
+    print(f"║    💬 Nhắn tin trực tiếp để được phản hồi nhanh nhất    ║")
+    print(f"║                                                          ║")
+    print(f"╚══════════════════════════════════════════════════════════╝{Colors.RESET}\n")
+    
     # Countdown ảo
     print(f"{Colors.YELLOW}[*] {Colors.WHITE}Thời gian dự kiến release V4:{Colors.RESET}")
     animated_dots("⏰ Đang tính toán", 3)
@@ -235,7 +288,8 @@ def main():
     # Footer
     print(f"\n{Colors.CYAN}{'='*65}{Colors.RESET}")
     print(f"{Colors.DIM}© 2024 HTOOL | Follow for updates{Colors.RESET}")
-    print(f"{Colors.DIM}Contact Admin for more information{Colors.RESET}")
+    print(f"{Colors.DIM}📧 Contact: Join Zalo group for support{Colors.RESET}")
+    print(f"{Colors.DIM}🔗 https://zalo.me/g/e6bb2ppq4nofewqbfhrk{Colors.RESET}")
     print(f"{Colors.CYAN}{'='*65}{Colors.RESET}")
     
     # Exit message
@@ -243,18 +297,18 @@ def main():
     
     try:
         for i in range(5, 0, -1):
-            sys.stdout.write(f"\r{Colors.DIM}Tự động thoát trong: {i} giây{Colors.RESET}")
+            sys.stdout.write(f"\r{Colors.DIM}Tự động thoát trong: {i} giây - Tham gia nhóm Zalo để được hỗ trợ{Colors.RESET}")
             sys.stdout.flush()
             time.sleep(1)
-        print(f"\n{Colors.BRIGHT_GREEN}👋 Tạm biệt! Hẹn gặp lại ở V4!{Colors.RESET}\n")
+        print(f"\n{Colors.BRIGHT_GREEN}👋 Tạm biệt! Hẹn gặp lại trong nhóm Zalo!{Colors.RESET}\n")
     except KeyboardInterrupt:
-        print(f"\n\n{Colors.BRIGHT_YELLOW}👋 Thoát ngay! See you in V4!{Colors.RESET}\n")
+        print(f"\n\n{Colors.BRIGHT_YELLOW}👋 Thoát ngay! Nhớ tham gia nhóm Zalo nhé!{Colors.RESET}\n")
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(f"\n\n{Colors.BRIGHT_YELLOW}👋 See you in V4!{Colors.RESET}\n")
+        print(f"\n\n{Colors.BRIGHT_YELLOW}👋 See you in V4! Join Zalo group for updates!{Colors.RESET}\n")
         sys.exit(0)
     except Exception as e:
         print(f"\n{Colors.BRIGHT_RED}[✗] Lỗi: {e}{Colors.RESET}")
