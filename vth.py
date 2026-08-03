@@ -1,195 +1,261 @@
+import urllib.request
 import os
 import sys
 import time
 import random
 
-# Khóa hỗ trợ mã màu ANSI trên Windows
+# Hỗ trợ ANSI trên Windows
 if os.name == 'nt':
     os.system('')
 
-# Bảng mã màu ANSI
-RESET = "\033[0m"
-BOLD = "\033[1m"
-DIM = "\033[2m"
-BLINK = "\033[5m"
-COLORS = {
-    'red': "\033[91m",
-    'green': "\033[92m",
-    'yellow': "\033[93m",
-    'blue': "\033[94m",
-    'magenta': "\033[95m",
-    'cyan': "\033[96m",
-    'white': "\033[97m",
-    'bright_red': "\033[1;91m",
-    'bright_green': "\033[1;92m",
-    'bright_yellow': "\033[1;93m",
-    'bright_cyan': "\033[1;96m",
-}
+# Bảng màu ANSI
+class Colors:
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+    DIM = "\033[2m"
+    BLINK = "\033[5m"
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    MAGENTA = "\033[95m"
+    CYAN = "\033[96m"
+    WHITE = "\033[97m"
+    BRIGHT_RED = "\033[1;91m"
+    BRIGHT_GREEN = "\033[1;92m"
+    BRIGHT_YELLOW = "\033[1;93m"
+    BRIGHT_CYAN = "\033[1;96m"
+    BG_RED = "\033[41m"
+    BG_GREEN = "\033[42m"
+    BG_YELLOW = "\033[43m"
 
 def clear_screen():
     """Xóa màn hình console"""
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def type_writer(text, delay=0.03, color=COLORS['cyan']):
-    """Hiệu ứng gõ máy đánh chữ sinh động"""
+def type_writer(text, delay=0.03, color=Colors.WHITE):
+    """Hiệu ứng gõ máy đánh chữ"""
     for char in text:
-        sys.stdout.write(color + char + RESET)
+        sys.stdout.write(color + char + Colors.RESET)
         sys.stdout.flush()
         time.sleep(delay)
     print()
 
 def loading_animation(message, duration=2):
-    """Hiệu ứng loading với dấu chấm"""
+    """Hiệu ứng loading với spinner"""
     chars = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
     end_time = time.time() + duration
     while time.time() < end_time:
         for char in chars:
-            sys.stdout.write(f"\r{COLORS['cyan']}{char} {message}{RESET}")
+            sys.stdout.write(f"\r{Colors.CYAN}{char} {message}{Colors.RESET}")
             sys.stdout.flush()
             time.sleep(0.05)
+    print()
 
-def print_border(char="═", width=65, color=COLORS['cyan']):
-    """In đường viền"""
-    print(f"{color}{BOLD}{char * width}{RESET}")
+def blink_text(text, color=Colors.BRIGHT_RED, duration=3):
+    """Text nhấp nháy"""
+    end_time = time.time() + duration
+    while time.time() < end_time:
+        sys.stdout.write(f"\r{color}{Colors.BOLD}{Colors.BLINK}{text}{Colors.RESET}")
+        sys.stdout.flush()
+        time.sleep(0.5)
+        sys.stdout.write(f"\r{' ' * len(text)}")
+        sys.stdout.flush()
+        time.sleep(0.3)
+    print(f"\r{color}{Colors.BOLD}{text}{Colors.RESET}")
 
-def print_centered(text, width=65, color=COLORS['white']):
-    """In text căn giữa"""
-    print(f"{color}{BOLD}{text.center(width)}{RESET}")
+def draw_warning_box():
+    """Vẽ hộp cảnh báo đẹp"""
+    box = f"""
+{Colors.BRIGHT_RED}{Colors.BOLD}╔══════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║                    {Colors.BRIGHT_YELLOW}⚠️  THÔNG BÁO QUAN TRỌNG  ⚠️{Colors.BRIGHT_RED}                    ║
+║                                                                  ║
+║           {Colors.WHITE}🛑 TOOL V3 ĐÃ HẾT HẠN SỬ DỤNG 🛑{Colors.BRIGHT_RED}                     ║
+║                                                                  ║
+║        {Colors.YELLOW}Phiên bản V3 không còn được hỗ trợ nữa{Colors.BRIGHT_RED}                   ║
+║        {Colors.YELLOW}Vui lòng chờ bản cập nhật V4 mới nhất{Colors.BRIGHT_RED}                  ║
+║                                                                  ║
+║              {Colors.BRIGHT_GREEN}🔄 ĐANG UPDATE V4... 🔄{Colors.BRIGHT_RED}                         ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝{Colors.RESET}
+    """
+    print(box)
 
-def rainbow_text(text, delay=0.1):
-    """Hiệu ứng text đổi màu cầu vồng"""
-    colors_list = [COLORS['bright_red'], COLORS['bright_yellow'], COLORS['bright_green'], 
-                   COLORS['bright_cyan'], COLORS['magenta'], COLORS['blue']]
+def progress_bar_update(message="UPDATING TO V4", duration=5):
+    """Thanh tiến trình cập nhật"""
+    print(f"\n{Colors.CYAN}[*] {Colors.WHITE}{message}...{Colors.RESET}\n")
     
-    for _ in range(3):
-        for color in colors_list:
-            sys.stdout.write(f"\r{color}{BOLD}{text}{RESET}")
-            sys.stdout.flush()
-            time.sleep(delay)
+    colors = [Colors.BRIGHT_RED, Colors.BRIGHT_YELLOW, Colors.BRIGHT_GREEN, 
+              Colors.BRIGHT_CYAN, Colors.MAGENTA]
+    
+    for i in range(101):
+        bar_length = 40
+        filled = i * bar_length // 100
+        bar = '█' * filled + '▒' * (bar_length - filled)
+        
+        # Gradient color effect
+        color = colors[i % len(colors)]
+        
+        # Thêm biểu tượng trạng thái
+        if i < 30:
+            status = "📥 DOWNLOADING"
+        elif i < 60:
+            status = "🔧 INSTALLING"
+        elif i < 90:
+            status = "⚙️ CONFIGURING"
+        else:
+            status = "✨ FINALIZING"
+        
+        sys.stdout.write(f"\r{color}[{Colors.BOLD}{bar}{color}] {i}% {status}{Colors.RESET}   ")
+        sys.stdout.flush()
+        time.sleep(duration / 100)
+    
+    print("\n")
 
-def sparkle_effect(text, duration=3):
-    """Hiệu ứng lấp lánh cho text quan trọng"""
-    sparkles = ["✨", "⭐", "💫", "🌟", "⚡", "🔥", "💎", "🎯"]
+def sparkle_message(text, duration=3):
+    """Message lấp lánh"""
+    sparkles = ["✨", "⭐", "💫", "🌟", "⚡", "🔥", "💎", "🎯", "🚀", "💡"]
     end_time = time.time() + duration
     while time.time() < end_time:
         sparkle = random.choice(sparkles)
-        sys.stdout.write(f"\r{COLORS['bright_yellow']}{BOLD}{sparkle} {text} {sparkle}{RESET}")
+        sys.stdout.write(f"\r{Colors.BRIGHT_YELLOW}{sparkle} {text} {sparkle}{Colors.RESET}")
         sys.stdout.flush()
         time.sleep(0.2)
+    print()
 
-def draw_box(title, content_lines, box_color=COLORS['cyan']):
-    """Vẽ hộp thông báo đẹp"""
-    max_width = max(len(line) for line in content_lines) + 4
-    max_width = max(max_width, len(title) + 4)
-    
-    # Top border
-    print(f"{box_color}╔{'═' * (max_width - 2)}╗{RESET}")
-    
-    # Title
-    padding = (max_width - len(title) - 2) // 2
-    extra = (max_width - len(title) - 2) % 2
-    print(f"{box_color}║{' ' * padding}{COLORS['bright_yellow']}{BOLD}{title}{RESET}{box_color}{' ' * (padding + extra)}║{RESET}")
-    
-    # Separator
-    print(f"{box_color}╠{'═' * (max_width - 2)}╣{RESET}")
-    
-    # Content
-    for line in content_lines:
-        padding = max_width - len(line) - 2
-        print(f"{box_color}║{RESET} {line}{' ' * (padding - 1)}{box_color}║{RESET}")
-    
-    # Bottom border
-    print(f"{box_color}╚{'═' * (max_width - 2)}╝{RESET}")
+def show_info_section():
+    """Hiển thị thông tin chi tiết"""
+    info = f"""
+{Colors.CYAN}┌────────────────────────────────────────────────────────────────┐
+│ {Colors.WHITE}{Colors.BOLD}THÔNG TIN CHI TIẾT:{Colors.CYAN}                                              │
+│                                                                │
+│ {Colors.RED}❌ {Colors.WHITE}V3 Status: {Colors.BRIGHT_RED}DEPRECATED{Colors.CYAN}                                   │
+│ {Colors.YELLOW}⏳ {Colors.WHITE}V4 Status: {Colors.BRIGHT_YELLOW}DEVELOPING...{Colors.CYAN}                               │
+│ {Colors.GREEN}📅 {Colors.WHITE}Release Date: {Colors.BRIGHT_GREEN}SOON{Colors.CYAN}                                       │
+│                                                                │
+│ {Colors.WHITE}V4 sẽ có những cải tiến vượt trội:{Colors.CYAN}                           │
+│ {Colors.BRIGHT_GREEN}  🚀 {Colors.WHITE}Tốc độ nhanh hơn 200%{Colors.CYAN}                                 │
+│ {Colors.BRIGHT_GREEN}  🛡️ {Colors.WHITE}Bảo mật nâng cao{Colors.CYAN}                                       │
+│ {Colors.BRIGHT_GREEN}  🎨 {Colors.WHITE}Giao diện hoàn toàn mới{Colors.CYAN}                                │
+│ {Colors.BRIGHT_GREEN}  🔧 {Colors.WHITE}Fix toàn bộ lỗi V3{Colors.CYAN}                                     │
+│                                                                │
+│ {Colors.WHITE}Theo dõi kênh để nhận thông báo sớm nhất!{Colors.CYAN}                       │
+└────────────────────────────────────────────────────────────────┘{Colors.RESET}
+    """
+    print(info)
 
-def animated_link(link_text, duration=5):
-    """Hiệu ứng link nhấp nháy nhiều kiểu"""
-    styles = [
-        f"{COLORS['bright_red']}{BOLD}{BLINK}",
-        f"{COLORS['bright_yellow']}{BOLD}{BLINK}",
-        f"{COLORS['bright_green']}{BOLD}{BLINK}",
-        f"{COLORS['bright_cyan']}{BOLD}{BLINK}",
-        f"{COLORS['magenta']}{BOLD}{BLINK}",
-        f"{COLORS['blue']}{BOLD}{BLINK}",
+def animated_dots(text, duration=3):
+    """Text với dấu chấm động"""
+    end_time = time.time() + duration
+    dots = 0
+    while time.time() < end_time:
+        dot_str = "." * ((dots % 3) + 1)
+        sys.stdout.write(f"\r{Colors.BRIGHT_YELLOW}{text}{dot_str}{' ' * (3 - len(dot_str))}{Colors.RESET}")
+        sys.stdout.flush()
+        dots += 1
+        time.sleep(0.5)
+    print()
+
+def fake_update_process():
+    """Mô phỏng quá trình update"""
+    print(f"\n{Colors.CYAN}{'='*65}{Colors.RESET}")
+    print(f"{Colors.BRIGHT_CYAN}{Colors.BOLD}[UPDATE LOG]{Colors.RESET}\n")
+    
+    steps = [
+        (f"{Colors.GREEN}[✓]{Colors.RESET} {Colors.DIM}Kiểm tra phiên bản V3... {Colors.BRIGHT_RED}DEPRECATED{Colors.RESET}", 0.5),
+        (f"{Colors.YELLOW}[→]{Colors.RESET} Đang tải metadata V4...", 1.0),
+        (f"{Colors.GREEN}[✓]{Colors.RESET} {Colors.DIM}Metadata loaded (2.4MB){Colors.RESET}", 0.5),
+        (f"{Colors.YELLOW}[→]{Colors.RESET} Đang kiểm tra dependencies...", 1.0),
+        (f"{Colors.GREEN}[✓]{Colors.RESET} {Colors.DIM}All dependencies satisfied{Colors.RESET}", 0.5),
+        (f"{Colors.YELLOW}[→]{Colors.RESET} Compiling V4 source...", 1.5),
+        (f"{Colors.GREEN}[✓]{Colors.RESET} {Colors.DIM}Compilation successful{Colors.RESET}", 0.5),
+        (f"{Colors.CYAN}[*]{Colors.RESET} {Colors.BRIGHT_YELLOW}V4 ready to deploy!{Colors.RESET}", 0.5),
     ]
     
-    end_time = time.time() + duration
-    style_index = 0
-    while time.time() < end_time:
-        sys.stdout.write(f"\r{styles[style_index % len(styles)]}  {link_text}  {RESET}")
+    for step, delay in steps:
+        sys.stdout.write(f"\r{step}")
         sys.stdout.flush()
-        style_index += 1
-        time.sleep(0.3)
-    print("\n")
+        time.sleep(delay)
+        print()
+    
+    print(f"\n{Colors.CYAN}{'='*65}{Colors.RESET}")
 
 def main():
     clear_screen()
     
-    # Loading effect
-    loading_animation("Đang kết nối đến cộng đồng...", 2)
-    clear_screen()
+    # Header
+    print(f"\n{Colors.BRIGHT_CYAN}{Colors.BOLD}╔══════════════════════════════════════════════════════════╗{Colors.RESET}")
+    print(f"{Colors.BRIGHT_CYAN}{Colors.BOLD}║{Colors.RESET}          {Colors.WHITE}HTOOL LOADER - AUTO UPDATER{Colors.RESET}              {Colors.BRIGHT_CYAN}{Colors.BOLD}║{Colors.RESET}")
+    print(f"{Colors.BRIGHT_CYAN}{Colors.BOLD}╚══════════════════════════════════════════════════════════╝{Colors.RESET}\n")
     
-    # Header hoành tráng
-    print(f"\n{COLORS['cyan']}{BOLD}╔{'═'*63}╗{RESET}")
-    rainbow_text("🔥 THÔNG BÁO KHẨN CẤP & KẾT NỐI CỘNG ĐỒNG 🔥", 0.1)
-    print(f"{COLORS['cyan']}{BOLD}╚{'═'*63}╝{RESET}\n")
+    time.sleep(1)
     
-    time.sleep(0.5)
-    
-    # Box thông báo chính
-    draw_box("📢 THÔNG BÁO QUAN TRỌNG", [
-        "Chào mừng bạn đến với cộng đồng mới!",
-        "Nơi giao lưu, học hỏi và phát triển cùng nhau.",
-        "Cơ hội kết nối với những người cùng đam mê.",
-    ], COLORS['cyan'])
+    # Cảnh báo V3 hết hạn
+    draw_warning_box()
     
     print()
-    time.sleep(0.5)
+    type_writer("🔍 Đang kiểm tra trạng thái tool...", 0.03, Colors.CYAN)
+    time.sleep(1)
     
-    # Message with type writer effect
-    type_writer("🚀 Đừng bỏ lỡ cơ hội tham gia nhóm mới của chúng tôi:", 0.03, COLORS['bright_yellow'])
-    print()
-    time.sleep(0.3)
-    
-    # Featured link box
-    draw_box("🔗 LINK THAM GIA CHÍNH THỨC", [
-        "https://zalo.me/g/e6bb2ppq4nofewqbfhrk",
-    ], COLORS['bright_green'])
-    
-    print()
-    time.sleep(0.3)
-    
-    # Animated link
-    sparkle_effect("👆 NHẤP VÀO LINK TRÊN ĐỂ THAM GIA NGAY 👆", 3)
-    print("\n")
-    
-    time.sleep(0.5)
-    
-    # Feature highlights
-    features = [
-        "🎯 Kiến thức chuyên sâu được chia sẻ mỗi ngày",
-        "🤝 Kết nối với cộng đồng năng động",
-        "🎁 Cơ hội nhận quà tặng hấp dẫn",
-        "💡 Thảo luận và giải đáp thắc mắc 24/7",
-        "📈 Cập nhật xu hướng mới nhất",
-    ]
-    
-    draw_box("✨ LỢI ÍCH KHI THAM GIA", features, COLORS['magenta'])
+    # Thông báo V3 deprecated
+    blink_text("⚠️  TOOL V3 ĐÃ NGỪNG HOẠT ĐỘNG - VUI LÒNG CHỜ V4  ⚠️", Colors.BRIGHT_RED, 3)
     
     print()
     
-    # Final call to action
-    print_centered("Số lượng có hạn - Đừng chần chừ!", 65, COLORS['bright_red'])
-    print_centered("Tham gia ngay hôm nay để không bỏ lỡ! 🎉", 65, COLORS['bright_yellow'])
+    # Hiển thị thông tin
+    show_info_section()
     
-    print(f"\n{COLORS['cyan']}{'='*65}{RESET}")
+    print()
+    
+    # Fake update process
+    sparkle_message("🔄 ĐANG TIẾN HÀNH CẬP NHẬT LÊN V4 🔄", 3)
+    
+    fake_update_process()
+    
+    # Progress bar
+    progress_bar_update("UPDATING TO V4", 5)
+    
+    # Thông báo hoàn thành
+    print(f"\n{Colors.BRIGHT_GREEN}{Colors.BOLD}╔══════════════════════════════════════════════════════════╗")
+    print(f"║                                                          ║")
+    print(f"║         ✅ UPDATE V4 ĐANG ĐƯỢC HOÀN THIỆN ✅             ║")
+    print(f"║                                                          ║")
+    print(f"║     Vui lòng đợi thông báo chính thức từ Admin           ║")
+    print(f"║     Tool sẽ tự động cập nhật khi có phiên bản mới        ║")
+    print(f"║                                                          ║")
+    print(f"╚══════════════════════════════════════════════════════════╝{Colors.RESET}\n")
+    
+    # Countdown ảo
+    print(f"{Colors.YELLOW}[*] {Colors.WHITE}Thời gian dự kiến release V4:{Colors.RESET}")
+    animated_dots("⏰ Đang tính toán", 3)
+    
+    print(f"\n{Colors.BRIGHT_CYAN}[*] {Colors.WHITE}Dự kiến: {Colors.BRIGHT_GREEN}SOON™{Colors.RESET} {Colors.DIM}(Vui lòng kiên nhẫn chờ đợi){Colors.RESET}")
     
     # Footer
-    print(f"\n{COLORS['dim']}💬 Mọi thắc mắc vui lòng liên hệ qua nhóm Zalo{ RESET}")
-    print(f"{COLORS['dim']}© 2024 Cộng đồng kết nối - All rights reserved{ RESET}\n")
+    print(f"\n{Colors.CYAN}{'='*65}{Colors.RESET}")
+    print(f"{Colors.DIM}© 2024 HTOOL | Follow for updates{Colors.RESET}")
+    print(f"{Colors.DIM}Contact Admin for more information{Colors.RESET}")
+    print(f"{Colors.CYAN}{'='*65}{Colors.RESET}")
+    
+    # Exit message
+    print(f"\n{Colors.BRIGHT_YELLOW}Chương trình sẽ tự động thoát sau 5 giây...{Colors.RESET}")
+    
+    try:
+        for i in range(5, 0, -1):
+            sys.stdout.write(f"\r{Colors.DIM}Tự động thoát trong: {i} giây{Colors.RESET}")
+            sys.stdout.flush()
+            time.sleep(1)
+        print(f"\n{Colors.BRIGHT_GREEN}👋 Tạm biệt! Hẹn gặp lại ở V4!{Colors.RESET}\n")
+    except KeyboardInterrupt:
+        print(f"\n\n{Colors.BRIGHT_YELLOW}👋 Thoát ngay! See you in V4!{Colors.RESET}\n")
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(f"\n\n{COLORS['bright_yellow']}👋 Tạm biệt! Hy vọng sẽ gặp bạn trong nhóm Zalo!{RESET}\n")
+        print(f"\n\n{Colors.BRIGHT_YELLOW}👋 See you in V4!{Colors.RESET}\n")
         sys.exit(0)
+    except Exception as e:
+        print(f"\n{Colors.BRIGHT_RED}[✗] Lỗi: {e}{Colors.RESET}")
+        sys.exit(1)
