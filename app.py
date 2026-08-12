@@ -8,7 +8,7 @@ app = Flask(__name__)
 DB_HOST = "sql303.ezyro.com"
 DB_NAME = "ezyro_42627914_htool_keys"
 DB_USER = "ezyro_42627914"
-DB_PASS = "MAT_KHAU_VPANEL_CUA_BAN"  # ← SỬA MẬT KHẨU THẬT
+DB_PASS = "Hunghai443@#"  # ← SỬA MẬT KHẨU THẬT
 
 @app.route('/')
 def home():
