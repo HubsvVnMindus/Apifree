@@ -7,7 +7,7 @@ app = Flask(__name__)
 # Cấu hình từ environment variables
 DB_HOST = os.environ.get('DB_HOST', 'sql303.ezyro.com')
 DB_USER = os.environ.get('DB_USER', 'ezyro_42627914')
-DB_PASS = os.environ.get('DB_PASS', 'MAT_KHAU_VPANEL_CUA_BAN')
+DB_PASS = os.environ.get('DB_PASS', 'Hunghai443@#')
 DB_NAME = os.environ.get('DB_NAME', 'ezyro_42627914_htool_keys')
 
 @app.route('/verify')
