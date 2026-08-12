@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: htool-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: DB_HOST
+        value: sql303.ezyro.com
+      - key: DB_USER
+        value: ezyro_42627914
+      - key: DB_PASS
+        value: MAT_KHAU_VPANEL_CUA_BAN
+      - key: DB_NAME
+        value: ezyro_42627914_htool_keys
