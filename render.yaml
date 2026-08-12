@@ -10,6 +10,6 @@ services:
       - key: DB_USER
         value: ezyro_42627914
       - key: DB_PASS
-        value: MAT_KHAU_VPANEL_CUA_BAN
+        value: Hunghai443@#
       - key: DB_NAME
         value: ezyro_42627914_htool_keys
