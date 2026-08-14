@@ -1,8 +1,10 @@
-# proxy_list.txt - Cập nhật danh sách proxy của bạn
-http://163.181.207.213:9999
-http://163.181.207.215:9999
-http://163.181.207.170:9999
-http://43.109.48.180:9999
-http://163.181.207.230:9999
-http://113.160.132.26:8080
-http://171.253.95.24:2105
+31.59.20.176:6754:gltvbykq:l4gx7bbcs2ze
+31.56.127.193:7684:gltvbykq:l4gx7bbcs2ze
+45.38.107.97:6014:gltvbykq:l4gx7bbcs2ze
+198.105.121.200:6462:gltvbykq:l4gx7bbcs2ze
+64.137.96.74:6641:gltvbykq:l4gx7bbcs2ze
+198.23.243.226:6361:gltvbykq:l4gx7bbcs2ze
+38.154.185.97:6370:gltvbykq:l4gx7bbcs2ze
+84.247.60.125:6095:gltvbykq:l4gx7bbcs2ze
+142.111.67.146:5611:gltvbykq:l4gx7bbcs2ze
+191.96.254.138:6185:gltvbykq:l4gx7bbcs2ze
