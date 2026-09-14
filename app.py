@@ -120,8 +120,34 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 # ================== CẤU HÌNH ==================
 
-console = Console()
+console = Console(force_terminal=True, color_system="auto")
 tz = pytz.timezone("Asia/Ho_Chi_Minh")
+
+def force_clear():
+    """Xóa sạch hoàn toàn màn hình (hoạt động tốt trên Windows + Linux + macOS)"""
+    try:
+        # 1. System clear (Windows: cls, Linux/mac: clear)
+        if os.name == "nt":
+            os.system("cls")
+        else:
+            os.system("clear")
+    except Exception:
+        pass
+
+    try:
+        # 2. Rich clear (gọi trực tiếp method gốc để tránh đệ quy)
+        Console.clear(console)
+    except Exception:
+        pass
+
+    try:
+        # 3. ANSI escape mạnh (xóa buffer + về đầu)
+        print("\033[2J\033[3J\033[H", end="", flush=True)
+    except Exception:
+        pass
+
+# Ghi đè console.clear() để mọi chỗ gọi đều xóa sạch
+console.clear = force_clear
 
 # ================== GIAO DIỆN HTOOL ==================
 
@@ -6438,6 +6464,7 @@ def select_account_premium() -> bool:
 def main_vth():
     global _in_menu, _is_authenticated, _user_key, _key_type
 
+    force_clear()          # Xóa sạch màn hình ngay khi bắt đầu
     migrate_old_data()
 
     # Chỉ kiểm tra ban theo IP (đã bỏ rule cùng máy / fingerprint)
@@ -6451,6 +6478,7 @@ def main_vth():
         safe_console_print(f"[yellow]⚠️ Không kiểm tra được IP/ban: {e}[/yellow]")
 
     while not _is_authenticated:
+        force_clear()      # Xóa sạch trước mỗi lần hiện menu đăng nhập
         success, key, key_type = show_auth_choice_menu()
         if success:
             _is_authenticated = True
@@ -6468,7 +6496,7 @@ def main_vth():
             console.print("[red]👋 Tạm biệt![/red]")
             return
 
-    console.clear()
+    force_clear()          # Xóa sạch trước khi hiện logo + menu chính
     key_col = HTOOL_COLORS["gold"] if _key_type == "vip" else HTOOL_COLORS["diamond"]
     logo_lines = LOGO.split("\n")
     for i, line in enumerate(logo_lines):
@@ -6495,7 +6523,7 @@ def main_vth():
         choice = build_main_menu()
 
         if choice == '1':
-            console.clear()
+            force_clear()
             if select_account_premium():
                 if prompt_settings():
                     start_game_flow()
@@ -6517,13 +6545,13 @@ def main_vth():
             delete_account(accounts)
 
         elif choice == '6':
-            console.clear()
+            force_clear()
             if prompt_settings():
                 save_strategy_config()
             time.sleep(2)
 
         elif choice == '7':
-            console.clear()
+            force_clear()
             if select_account_premium():
                 if load_strategy_config():
                     start_game_flow()
@@ -6531,7 +6559,7 @@ def main_vth():
                     time.sleep(2)
 
         elif choice == '8':
-            console.clear()
+            force_clear()
             if _secure_tool:
                 _secure_tool.display_status()
             else:
