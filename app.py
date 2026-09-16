@@ -1,1 +1,1 @@
-pinrt("Hello ")
+print("=" * 60)
