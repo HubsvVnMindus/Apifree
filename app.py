@@ -1,1 +1,1 @@
-print("=" * 60)
+print("HELLO YOU TEST SERVER")
