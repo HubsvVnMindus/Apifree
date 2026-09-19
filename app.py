@@ -1,1 +1,1 @@
-print("HELLO YOU TEST SERVER")
+print("TRUY CẬP: https://tst-tool.vercel.app ĐỂ XEM CẬP NHẬT")
